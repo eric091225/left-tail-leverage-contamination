@@ -1,0 +1,12 @@
+# 原始数据不入库：请按 README 从 OSF 下载（含 md5 校验）
+data/*.csv
+data/*.pkl
+!data/README.md
+
+# 运行产出（可由脚本重新生成）
+results/figures/*.png
+results/figures/*.pdf
+
+__pycache__/
+*.pyc
+.DS_Store
