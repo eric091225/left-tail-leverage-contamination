@@ -255,11 +255,13 @@ python 01_preprocess.py && python 08_dtw_knn_baseline.py   # → 0.686
 │   ├── features/          特征矩阵
 │   └── figures/           绘图产出
 ├── requirements.txt
-├── LICENSE                MIT（覆盖代码与结果文件；原始数据不在本库、版权归原作者）
+├── LICENSE                MIT
 └── UPLOAD_MANIFEST.md     入库清单与逐项复现说明
 ```
 
 `results/` 下的文件是**运行产出**而非输入，随库上传是为了让读者不跑代码也能核对论文数值。
+
+**许可与数据版权。** 本仓库的代码与结果文件以 MIT 许可发布。**原始反应时数据不在本仓库内**，其版权归 Ratcliff & Vanunu (2022) 所有，MIT 许可不覆盖该数据；请依 `data/README.md` 自 OSF 获取并遵守其原始条款。
 
 ---
 
