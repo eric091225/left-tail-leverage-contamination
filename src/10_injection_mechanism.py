@@ -30,7 +30,7 @@ from swald import fit_swald
 
 OUT = Path("../results/tables/table3_injection.csv")
 
-# 真参数：取论文 3.1 节所述设定（落在老化 DDM 文献常见范围内）
+# 真参数：取论文 3.2 节所述设定（落在老化 DDM 文献常见范围内）
 TRUE_V, TRUE_A, TRUE_TER = 3.0, 1.2, 0.30
 N_TRIALS = 175                      # 数据集中位试次量
 LEVELS = (0.0, 0.0025, 0.005, 0.01, 0.02, 0.08)

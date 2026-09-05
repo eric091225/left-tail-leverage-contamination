@@ -341,7 +341,7 @@ if __name__ == "__main__":
           f"最大 {int(gp.max())}")
     if not a.preview:
         print()
-        print("  与论文 3.1 节报告值比对（不符请检查 150 ms 预处理口径与带宽半径）：")
+        print("  与论文 6.2 节报告值比对（不符请检查 150 ms 预处理口径与带宽半径）：")
         for label, got, want in (
             ("两组均值",   f"{counts[groups==0].mean():.1f}/{counts[groups==1].mean():.1f}", "172.0/166.7"),
             ("两组标准差", f"{counts[groups==0].std(ddof=1):.1f}/{counts[groups==1].std(ddof=1):.1f}", "14.5/56.4"),
