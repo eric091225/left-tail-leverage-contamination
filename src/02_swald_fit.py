@@ -41,6 +41,19 @@ def main():
     df.to_csv(FEAT_OUT)
     print(f"\n完成 SWald 拟合：{len(df)} 位被试，可疑/不收敛 {n_bad} 位。")
     print(f"已保存：{FEAT_OUT}")
+
+    # 边界解率（论文 2.2 节命名，6.1 节闸一将其列为常规诊断指标）：
+    # T_er 的优化下界是 1e-4 s（见 swald.py 的 bounds），估计值贴到该下界即为边界解。
+    # 参数解顶到约束边界是估计失效的经典标志——约束在替优化器做决定。
+    # 150 ms 口径下应得 23/59（老年 15、年轻 8）；250 ms 口径下降至 5/59。
+    at_bound = df["ter"] <= 2e-4
+    n_hit = int(at_bound.sum())
+    print(f"\n边界解率：{n_hit}/{len(df)} = {n_hit / len(df):.1%} 的被试 T_er 顶到优化下界")
+    if n_hit:
+        print(f"  其中老年组 {int((df.loc[at_bound, 'label'] == 1).sum())} 人，"
+              f"年轻组 {int((df.loc[at_bound, 'label'] == 0).sum())} 人")
+    print(f"  T_er 组均值：年轻 {df.loc[df.label == 0, 'ter'].mean():.3f} s，"
+          f"老年 {df.loc[df.label == 1, 'ter'].mean():.3f} s")
     # 把 n_bad 与可疑被试列表记下来，供核查
     if n_bad:
         print("→ 上列被试的 a 估计需谨慎解读；本文的处理是保留并标注。")

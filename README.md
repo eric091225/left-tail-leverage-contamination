@@ -65,7 +65,7 @@ python fig1_leakage_diagnostic.py        # 图6.2
 | 脚本 | 产出 | 论文位置 |
 |---|---|---|
 | `01_preprocess.py` | `data/rt_data.pkl` | — |
-| `02_swald_fit.py` | `swald_features.csv` | — |
+| `02_swald_fit.py` | `swald_features.csv` | **2.2 节**边界解率（终端输出：150 ms 下 23/59，其中老年 15、年轻 8） |
 | `03_feature_engineering.py` | `rt_baseline.csv`、`feature_pool_18d.csv` | — |
 | `04_loocv_evaluation.py` | `table2.csv`、`predictions_all.csv` | 第七章五路线段 |
 | `05_statistical_tests.py` | 终端输出 | 第七章五路线段（p ≥ 0.302） |
@@ -199,18 +199,29 @@ k < 1 发散（似然无界）、k = 1 有限、k > 1 趋零（与 SWald 同构�
 
 `T_er ≈ 0.20` 才对得上论文。若看到 ~200，是没转秒。
 
-### 7. 6.2 节的 0.686 是 150 ms 口径，须改阈值后重跑
+### 7. 6.2 节引用的是 150 ms 口径，须改阈值后重跑
 
 `08_dtw_knn_baseline.py` **没有阈值开关**，只读 `01` 产出的 `rt_data.pkl`，而 `01` 硬编码
-250 ms。直接跑 `01`→`08` 得到的是 250 ms 数值（变体A 0.624）；论文 6.2 节引用的 **0.686 是
-150 ms 口径**。要复现它：
+250 ms。论文 6.2 节讨论的是被撤回的 0.950 那次实现，为便于直接对照，**该节全部数字都取
+150 ms 口径**。两个口径的对应关系：
+
+| 论文 6.2 节的量 | 150 ms（该节引用） | 250 ms（直接跑 `01`→`08` 所得） |
+|---|---|---|
+| 变体A（全窗 DP，等长截断） | 0.686 | 0.624（见 `table_dtw_knn.csv`） |
+| 变体C（泄漏基线，仅试次数） | 0.690 | 0.766（见 `table_dtw_knn.csv`） |
+| 以试次数为唯一特征的单变量 AUC | 0.589 | 0.572 |
+| 两组试次数的 t 检验 p | 0.620 | 0.544 |
+| 试次数（年轻 / 老年） | 172.0±14.5 / 166.7±56.4 | 171.6±14.9 / 165.1±56.7 |
+
+后三行由 `08` 在「两项标准检查」小节直接打印。要复现 150 ms 一列：
 
 ```bash
 # 1) 把 01_preprocess.py 第 44 行改为：RT_MIN_S, RT_MAX_S = 0.150, 4.0
-python 01_preprocess.py && python 08_dtw_knn_baseline.py   # → 0.686
+python 01_preprocess.py && python 08_dtw_knn_baseline.py   # → 变体A 0.686、变体C 0.690
 # 2) 改回 0.25 并重跑 01，否则后续脚本口径会错
 ```
 
+注意 `table_dtw_knn.csv` 存的始终是 250 ms 一列，重跑 150 ms 会覆盖它——照第 2 步跑回来即可。
 这是本仓库唯一需要手工改常量的地方。
 
 ---

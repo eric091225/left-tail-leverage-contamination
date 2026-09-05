@@ -35,6 +35,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from sklearn.metrics import roc_auc_score
+from scipy.stats import ttest_ind
 
 PKL_IN    = Path("../data/rt_data.pkl")
 PRED_IN   = Path("../results/predictions_all.csv")
@@ -161,6 +162,15 @@ def main():
     print(f"\n参与评估 N={n}（年轻 {int((y==0).sum())} / 老年 {int((y==1).sum())}）")
     print(f"试次数：年轻 {lens[y==0].mean():.1f}±{lens[y==0].std(ddof=1):.1f}，"
           f"老年 {lens[y==1].mean():.1f}±{lens[y==1].std(ddof=1):.1f}")
+
+    # 论文 6.2 节引用的两项「标准检查」——它们都没有报警，而这正是闸四的依据：
+    # 单变量 AUC 只能检出单调关系，t 检验只能检出均值差异，
+    # 而此处的混淆结构是「方差差异 + 局部聚类」，两者都看不见。
+    # 把同一个变量交给下游同款的 kNN（下面的变体 C），结论立刻不同。
+    print("\n=== 两项标准检查（论文 6.2 节）===")
+    print(f"  以试次数为唯一特征的单变量判别 AUC = {roc_auc_score(y, lens):.3f}")
+    print(f"  两组试次数的 t 检验            p = {ttest_ind(lens[y==0], lens[y==1]).pvalue:.3f}")
+    print("  ↑ 两项均不报警；下面变体 C 用同一个变量、换下游同款探测器")
 
     rows = []
 
