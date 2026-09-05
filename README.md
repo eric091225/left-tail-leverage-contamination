@@ -255,6 +255,7 @@ python 01_preprocess.py && python 08_dtw_knn_baseline.py   # → 0.686
 │   ├── features/          特征矩阵
 │   └── figures/           绘图产出
 ├── requirements.txt
+├── LICENSE                MIT（覆盖代码与结果文件；原始数据不在本库、版权归原作者）
 └── UPLOAD_MANIFEST.md     入库清单与逐项复现说明
 ```
 

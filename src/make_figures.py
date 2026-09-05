@@ -107,7 +107,7 @@ def fig3():
     box(CX, 2.36, BW, 0.68, "四道全部通过 → 特征间的比较方为有意义",
         fc="#eef6ef", ec=GREEN, lw=1.2, fs=9.4)
     ax.text(CX, 1.62,
-            "四道都不使用标签，都在比较开始之前运行；任一不通过，\n"
+            "四道都不把标签回灌进特征流程，都在比较开始之前运行；任一不通过，\n"
             "问题即归因于右侧对应的一栏，而不进入比较。",
             ha="center", va="center", fontsize=8.3, color=INK, linespacing=1.6)
     ax.text(CX, 0.62,
