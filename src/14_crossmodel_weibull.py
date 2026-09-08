@@ -28,6 +28,39 @@ import pandas as pd
 from pathlib import Path
 
 from weibull3 import sample_weibull3, fit_weibull3
+from weibull3 import weibull3_nll
+from scipy.optimize import minimize
+
+
+def fit_weibull3_fixed_k(t, k_fixed=1.0, n_restarts=5, seed=0):
+    """
+    把形状参数钉死、只估 (gamma, lambda) 的对照拟合。
+    仅用于论文 3.3 节 k = 1.0 一行的判据五——除此之外全文一律联合估计三个参数。
+    箱约束与 fit_weibull3 的前两维完全一致，以保证两者可比。
+    """
+    t = np.asarray(t, dtype=float)
+    t = t[np.isfinite(t)]
+    min_t = float(np.min(t))
+    upper = max(min_t - 1e-3, min_t * 0.99)
+    bounds = [(1e-4, upper), (1e-3, 20.0)]
+    rng = np.random.default_rng(seed)
+    inits = [np.array([0.5 * min_t, 0.5])]
+    for _ in range(n_restarts):
+        inits.append(np.array([rng.uniform(0.2, 0.8) * min_t, rng.uniform(0.2, 1.5)]))
+    best = None
+    for x0 in inits:
+        x0 = np.clip(x0, [b[0] for b in bounds], [b[1] for b in bounds])
+        try:
+            res = minimize(lambda q, tt: weibull3_nll(np.array([q[0], q[1], k_fixed]), tt),
+                           x0, args=(t,), method="L-BFGS-B", bounds=bounds,
+                           options={"maxiter": 500, "ftol": 1e-9})
+        except Exception:
+            continue
+        if np.isfinite(res.fun) and (best is None or res.fun < best.fun):
+            best = res
+    if best is None:
+        return {"gamma": np.nan, "upper": upper}
+    return {"gamma": float(best.x[0]), "upper": upper}
 
 OUT_A = Path("../results/tables/table_crossmodel_dose.csv")
 OUT_B = Path("../results/tables/table_crossmodel_ksweep.csv")
@@ -110,6 +143,29 @@ def main(reps, seed):
           f"{'方向随密度行为反转，与 H2 的前提一致' if up_lo>0 and dn_hi>0 else '★ 未见反转，请复核'}")
     print("  若两端方向相反，则失效不是某个分布族的特性，而是"
           "「密度在支撑下界处趋零 + 以 MLE 估计该下界」这一组合的性质。")
+
+    # 判据五：k = 1.0 一行为什么不是 100%——开关由「估计出的 k」拨动，不只由真值 k 拨动。
+    # 移位指数的位置参数 MLE 理论上恰等于 min(t)，触上界率应为 100%；联合估计下只有约 45%，
+    # 因为 k 自由时会漂到 1 以上，密度在下界处由「有限」转为「趋零」，gamma 随即被释放。
+    # 把 k 钉死在 1 重跑同一设定即可复原理论值。对应论文 3.3 节 k = 1.0 段。
+    row1 = [r for r in B if r["形状 k"] == 1.0][0]
+    rng5 = np.random.default_rng(seed)
+    hit_fixed = 0
+    for _ in range(reps):
+        t = sample_weibull3(TRUE_GAMMA, TRUE_LAM, 1.0, N_TRIALS, rng5)
+        m = rng5.random(N_TRIALS) < 0.01
+        if m.sum():
+            t[m] = rng5.uniform(CONTAM_LO, CONTAM_HI, int(m.sum()))
+        f = fit_weibull3_fixed_k(t, 1.0, seed=int(rng5.integers(1 << 30)))
+        hit_fixed += int(f["gamma"] >= f["upper"] - TOL)
+    print("\n判据五（k = 1.0 一行：开关由估计出的 k 拨动）：")
+    print(f"  联合估计 (gamma, lambda, k)：触上界 {row1['触及上界']:>6}，"
+          f"k 的估计均值 {row1['k 估计']:.2f}（> 1，密度已转为趋零）")
+    print(f"  固定 k = 1（真移位指数）    ：触上界 {100*hit_fixed/reps:5.1f}%"
+          f"  ← 理论值 100%")
+    print("  → " + ("两者相差悬殊，说明 45% 不是数值伪影，而是 k 自由后密度行为已经改变"
+                    if 100*hit_fixed/reps > 90 and float(row1["触及上界"].rstrip("%")) < 70
+                    else "★ 未见预期差异，请复核"))
 
 
 if __name__ == "__main__":
